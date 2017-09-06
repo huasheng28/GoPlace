@@ -56,6 +56,5 @@ func Upload(url, file string) (err error) {
 	return
 }
 func main() {
-	Upload("http://test.seeunsee.cn/jsb/wm-test", "/pian.jpg")
-
+	Upload("http://m.seeunsee.cn/intelligent-packaging-check/check.php", "/image/cigarette.jpg")
 }
