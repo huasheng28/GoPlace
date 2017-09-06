@@ -54,7 +54,11 @@ func postFile(url, fileName, filePath string) error {
 	}
 
 	//发送post请求
+
 	resp, err := http.Post(url, contentType, bodyBuf)
+	resp.Header.Add("Content-Length","107")
+	resp.Header.Add("Cache-Control","no-store,no-cache,must-revalidate,post-check=0,pre-check=0")
+
 	if err != nil {
 		fmt.Println("err2")
 		return err
