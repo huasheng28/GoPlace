@@ -7,6 +7,8 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+
+	"io/ioutil"
 )
 
 func Upload(url, file string) (err error) {
@@ -53,8 +55,12 @@ func Upload(url, file string) (err error) {
 	if res.StatusCode != http.StatusOK {
 		err = fmt.Errorf("bad status: %s", res.Status)
 	}
+	resbody,err:=ioutil.ReadAll(res.Body)
+
+	fmt.Println(res.Status)
+	fmt.Println(string(resbody))
 	return
 }
 func main() {
-	Upload("http://m.seeunsee.cn/intelligent-packaging-check/check.php", "/image/cigarette.jpg")
+	Upload("http://m.seeunsee.cn/intelligent-packaging-check/check.php", "F:/Code/GoPlace/src/github.com/GoPlace/imgup/image/cigarette.jpg")
 }

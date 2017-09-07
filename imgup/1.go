@@ -1,5 +1,4 @@
 package main
-
 import (
 	"bytes"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
 )
 
 // Creates a new file upload http request with optional extra params
@@ -18,6 +18,7 @@ func newfileUploadRequest(uri string, params map[string]string, paramName, path 
 		return nil, err
 	}
 	defer file.Close()
+
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile(paramName, filepath.Base(path))
@@ -25,6 +26,7 @@ func newfileUploadRequest(uri string, params map[string]string, paramName, path 
 		return nil, err
 	}
 	_, err = io.Copy(part, file)
+
 	for key, val := range params {
 		_ = writer.WriteField(key, val)
 	}
@@ -32,29 +34,21 @@ func newfileUploadRequest(uri string, params map[string]string, paramName, path 
 	if err != nil {
 		return nil, err
 	}
+
 	req, err := http.NewRequest("POST", uri, body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	return req, err
 }
-func upfile() {
-	path, _ := os.Getwd()
-	path += "/pian.jpg"
+
+func main() {
+	path, _ := os.Getwd()//获取当前绝对文件路径
+	path += "/image/cigarette.jpg"
 	extraParams := map[string]string{
-		"id":               "WU_FILE_0",
-		"name":             "pian.jpg",
 		"type":             "image/jpeg",
-		"lastModifiedDate": "Mon Apr 17 2017 15:31:08 GMT+0800 (CST)",
-		"size":             "241281",
 	}
-	_, err := newfileUploadRequest("http://test.seeunsee.cn/jsb/wm-test/api/check.php", extraParams, "file", path)
+	request, err := newfileUploadRequest("http://m.seeunsee.cn/intelligent-packaging-check/check.php", extraParams, "file", path)
 	if err != nil {
 		log.Fatal(err)
-	}
-}
-
-func up() {
-	for a := 1; a < 3; a++ {
-		go upfile()
 	}
 	client := &http.Client{}
 	resp, err := client.Do(request)
@@ -67,14 +61,12 @@ func up() {
 			log.Fatal(err)
 		}
 		resp.Body.Close()
-		fmt.Println(body)
-	}
-}
-func main() {
-	for a := 0; a < 3; a++ {
-		up()
-	}
-	for {
 
+		if err!=nil{
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(resp.Status)
+		fmt.Println(body)
 	}
 }

@@ -40,17 +40,15 @@ func newfileUploadRequest(uri string, params map[string]string, paramName, path 
 	return req, err
 }
 
-func up() {
+func main() {
 	path, _ := os.Getwd()
-	path += "/pian.jpg"
+	path += "/test.pdf"
 	extraParams := map[string]string{
-		"id":               "WU_FILE_0",
-		"name":             "pian.jpg",
-		"type":             "image/jpeg",
-		"lastModifiedDate": "Mon Apr 17 2017 15:31:08 GMT+0800 (CST)",
-		"size":             "241281",
+		"title":       "My Document",
+		"author":      "Matt Aimonetti",
+		"description": "A document with all the Go programming language secrets",
 	}
-	request, err := newfileUploadRequest("http://test.seeunsee.cn/jsb/wm-test/api/check.php", extraParams, "file", path)
+	request, err := newfileUploadRequest("https://google.com/upload", extraParams, "file", "/tmp/doc.pdf")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,16 +63,8 @@ func up() {
 			log.Fatal(err)
 		}
 		resp.Body.Close()
-		//fmt.Println(resp.StatusCode)
-		//fmt.Println(resp.Header)
+		fmt.Println(resp.StatusCode)
+		fmt.Println(resp.Header)
 		fmt.Println(body)
-	}
-}
-func main() {
-	for a := 0; a < 3; a++ {
-		go up()
-	}
-	for {
-
 	}
 }
