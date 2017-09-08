@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"regexp"
 )
 
 func newRequest(url string, params map[string]string, paramName, path string) (*http.Request, error) {
@@ -39,7 +40,8 @@ func newRequest(url string, params map[string]string, paramName, path string) (*
 	return req, err
 }
 
-func doUpload(url string, path string) (body bytes.Buffer) {
+func doUpload(url string, path string) string {
+	body := &bytes.Buffer{}
 	extraParams := map[string]string{
 		"type": "image/jpeg",
 	}
@@ -52,7 +54,7 @@ func doUpload(url string, path string) (body bytes.Buffer) {
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		body := &bytes.Buffer{}
+
 		_, err := body.ReadFrom(resp.Body)
 		if err != nil {
 			fmt.Println(err)
@@ -62,7 +64,7 @@ func doUpload(url string, path string) (body bytes.Buffer) {
 		//fmt.Println(body.String())
 
 	}
-	return body
+	return body.String()
 }
 
 func inputFile(num int) (url string, result string) {
@@ -73,16 +75,8 @@ func inputFile(num int) (url string, result string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	url, err := cfg.Section(sec).GetKey("url")
-	if err != nil {
-		fmt.Println(err)
-	}
-	result, err := cfg.Section(sec).GetKey("result")
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(url)
-	fmt.Println(result)
+	url = cfg.Section(sec).Key("url").String()
+	result = cfg.Section(sec).Key("result").String()
 	return url, result
 }
 
@@ -93,8 +87,17 @@ func getImgPath(num int) (imgPath string) {
 	return imgPath
 }
 
-func judge(result string) (judgement bool) {
+func pathExist(path string) bool {
+	_, err := os.Stat(path)
+	if err != nil && os.IsNotExist(err) {
+		return false
+	} else {
+		return true
+	}
+}
 
+func match(result string,respBody string) (bool,error){
+	return regexp.MatchString(result,respBody)
 }
 
 func outputFile(url string, num int, judgement bool) {
@@ -102,5 +105,32 @@ func outputFile(url string, num int, judgement bool) {
 }
 
 func main() {
+	for num := 1; ; num++ {
+		//取图片路径
+		imgPath := getImgPath(num)
 
+		//判断路径是否存在
+		if pathExist(imgPath) {
+
+			//取ini文件数据
+			url, result := inputFile(num)
+
+			//上传图片取返回参数
+			respBody := doUpload(url, imgPath)
+
+			//判断结果是否正确
+			judge,err:=match(result,respBody)
+			if err!=nil{
+				fmt.Println(err)
+			}
+			if judge{
+				fmt.Println("1")
+			}else {
+				fmt.Println("2")
+			}
+
+		} else {
+			break
+		}
+	}
 }

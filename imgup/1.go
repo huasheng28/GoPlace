@@ -42,7 +42,7 @@ func newfileUploadRequest(uri string, params map[string]string, paramName, path 
 
 func main() {
 	path, _ := os.Getwd()//获取当前绝对文件路径
-	path += "/image/cigarette.jpg"
+	path += "/image/1.jpg"
 	extraParams := map[string]string{
 		"type":             "image/jpeg",
 	}

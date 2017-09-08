@@ -62,5 +62,5 @@ func Upload(url, file string) (err error) {
 	return
 }
 func main() {
-	Upload("http://m.seeunsee.cn/intelligent-packaging-check/check.php", "F:/Code/GoPlace/src/github.com/GoPlace/imgup/image/cigarette.jpg")
+	Upload("http://m.seeunsee.cn/intelligent-packaging-check/check.php", "F:/Code/GoPlace/src/github.com/GoPlace/imgup/image/1.jpg")
 }

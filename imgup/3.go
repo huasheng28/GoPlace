@@ -80,9 +80,9 @@ func postFile(url, fileName, filePath string) error {
 //}
 func main() {
 	url := "http://m.seeunsee.cn/intelligent-packaging-check/check.php"
-	fileName := "cigarette.jpg"
+	fileName := "1.jpg"
 	filePath, _ := os.Getwd()
-	filePath += "/image/cigarette.jpg"
+	filePath += "/image/1.jpg"
 	//shap := "1"
 	//access_token := "793970d616c5b8281ed89c41d1c8f5cb"
 	//channel := "1"

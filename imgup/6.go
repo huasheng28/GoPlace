@@ -65,8 +65,6 @@ func doUpload(url string, path string) string {
 }
 func main() {
 
-
-
-	a:=doUpload("http://m.seeunsee.cn/intelligent-packaging-check/check.php","C:/Users/huash/Documents/GoPlace/src/GoPlace/imgup/image/cigarette.jpg")
+	a:=doUpload("http://m.seeunsee.cn/intelligent-packaging-check/check.php","F:/Code/GoPlace/src/github.com/GoPlace/imgup/image/1.jpg")
 	fmt.Println(a)
 }
