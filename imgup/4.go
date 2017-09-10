@@ -9,32 +9,33 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"regexp"
+	"strconv"
+	"strings"
 )
+
+func check(err error){
+	if err!=nil{
+		fmt.Println(err)
+	}
+}
 
 func newRequest(url string, params map[string]string, paramName, path string) (*http.Request, error) {
 	file, err := os.Open(path)
-	if err != nil {
-		fmt.Println(err)
-	}
+	check(err)
 	defer file.Close()
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile(paramName, filepath.Base(path))
-	if err != nil {
-		fmt.Println(err)
-	}
+	check(err)
 	_, err = io.Copy(part, file)
 
 	for key, val := range params {
 		_ = writer.WriteField(key, val)
 	}
 	err = writer.Close()
-	if err != nil {
-		fmt.Println(err)
-	}
+	check(err)
 	req, err := http.NewRequest("POST", url, body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	return req, err
@@ -46,23 +47,17 @@ func doUpload(url string, path string) string {
 		"type": "image/jpeg",
 	}
 	req, err := newRequest(url, extraParams, "file", path)
-	if err != nil {
-		fmt.Println(err)
-	}
+	check(err)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
 	} else {
-
 		_, err := body.ReadFrom(resp.Body)
 		if err != nil {
 			fmt.Println(err)
 		}
 		resp.Body.Close()
-
-		//fmt.Println(body.String())
-
 	}
 	return body.String()
 }
@@ -72,9 +67,7 @@ func inputFile(num int) (url string, result string) {
 	inputFilePath, _ := os.Getwd()
 	inputFilePath += "/input.ini"
 	cfg, err := ini.Load(inputFilePath)
-	if err != nil {
-		fmt.Println(err)
-	}
+	check(err)
 	url = cfg.Section(sec).Key("url").String()
 	result = cfg.Section(sec).Key("result").String()
 	return url, result
@@ -96,15 +89,20 @@ func pathExist(path string) bool {
 	}
 }
 
-func match(result string,respBody string) (bool,error){
-	return regexp.MatchString(result,respBody)
+func match(result string, respBody string) bool {
+	rt := regexp.QuoteMeta(result)
+	ry := regexp.QuoteMeta(respBody)
+	return strings.Contains(ry, rt)
 }
 
-func outputFile(url string, num int, judgement bool) {
-
+func writeToFile(url string, respBody string, judge bool) {
+	f,err:=os.OpenFile("log.txt",os.O_WRONLY|os.O_APPEND,0666)
+	check(err)
+	
 }
 
 func main() {
+	os.Create("logout.txt")
 	for num := 1; ; num++ {
 		//取图片路径
 		imgPath := getImgPath(num)
@@ -118,16 +116,18 @@ func main() {
 			//上传图片取返回参数
 			respBody := doUpload(url, imgPath)
 
+			fmt.Println(result)
+			fmt.Println(respBody)
 			//判断结果是否正确
-			judge,err:=match(result,respBody)
-			if err!=nil{
-				fmt.Println(err)
-			}
-			if judge{
+			judge := match(result, respBody)
+			if judge {
 				fmt.Println("1")
-			}else {
+			} else {
 				fmt.Println("2")
 			}
+
+			//输出到文件
+
 
 		} else {
 			break
