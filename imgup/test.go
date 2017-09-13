@@ -1,48 +1,52 @@
 package main
 
 import (
-	"io/ioutil"
-	"fmt"
-	"regexp"
-	"strings"
-	"os"
-	"net/http"
 	"bytes"
-	"mime/multipart"
-	"path/filepath"
-	"io"
-	"strconv"
+	"fmt"
 	"github.com/go-ini/ini"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
+	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
 )
 
-func getIniFileName(path string) ([]string){
+func getIniFileName(path string) []string {
 	//输入ini文件夹路径，输出包含所有ini文件名称的slice
-	f,err:=ioutil.ReadDir(path)
-	if err!=nil{
+	f, err := ioutil.ReadDir(path)
+	if err != nil {
 		fmt.Println(err)
 	}
 	var iniFile []string
 	for _, n := range f {
-		v:=n.Name()
-		reg,_:=regexp.MatchString(".ini",v)
-		if reg{
-			iniFile =append(iniFile,v)
+		v := n.Name()
+		reg, _ := regexp.MatchString(".ini", v)
+		if reg {
+			iniFile = append(iniFile, v)
 		}
 	}
 	return iniFile
 }
 
-func getUrl(path string,num int)(url string ,url1 string){
-	//输入ini文件夹路径，输出ini文件名所代表的接口url
-	url1=strings.Replace(getIniFileName(path)[num],".ini","",-1)
-	url2:=strings.Replace(url1,"+","/",-1)
-	url3:=strings.Replace(url2,"%",".",-1)
-	url="http://"+url3
-	return url,url1
+func getUrl1(path string, num int) (url1 string) {
+	//输入ini文件夹路径，输出img文件夹名称
+	return strings.Replace(getIniFileName(path)[num], ".ini", "", -1)
 }
 
-func check(err error){
-	if err!=nil{
+func getUrl(url1 string) string {
+	//输出url
+	url2 := strings.Replace(url1, "+", "/", -1)
+	url3 := strings.Replace(url2, "%", ".", -1)
+	url := "http://" + url3
+	return url
+}
+
+func check(err error) {
+	if err != nil {
 		fmt.Println(err)
 	}
 }
@@ -88,7 +92,7 @@ func doUpload(url string, path string) string {
 	return body.String()
 }
 
-func analysisIni(iniPath string,num int) (result string) {
+func analysisIni(iniPath string, num int) (result string) {
 	sec := strconv.Itoa(num)
 	cfg, err := ini.Load(iniPath)
 	check(err)
@@ -111,43 +115,57 @@ func pathExist(path string) bool {
 	}
 }
 
-func main(){
-	filePath,_:=os.Getwd()
+func main() {
+	filePath, _ := os.Getwd()
 	//ini文件夹路径
-	iniFilePath :=filePath+"/ini/"
-	iniFileList:=getIniFileName(iniFilePath)
+	iniFilePath := filePath + "/ini/"
+	iniFileList := getIniFileName(iniFilePath)
+
 	//创建log.txt
-	//f,err:=os.OpenFile("log.txt",os.O_CREATE|os.O_WRONLY|os.O_APPEND,0666)
-	//check(err)
-	fmt.Println("1")
+	f, err := os.OpenFile("log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	check(err)
+	i, j, k := 0, 0, 0
 
-	for num:=1;num>=len(iniFileList);num++{
-		fmt.Println("2")
-		//http://dshfjsbadhfbs.dsf+图片文件夹名称
-		url,imgPathName:=getUrl(iniFilePath,num)
-		fmt.Println("3")
-		//ini文件路径
-		iniPath:=iniFilePath+iniFileList[num]
+	for num := 0; num < len(iniFileList); num++ {
 		//图片文件夹名称
-		//_,imgPathName:= getUrl(iniFilePath,num)
+		imgPathName := getUrl1(iniFilePath, num)
+		//http://dshfjsbadhfbs.dsf
+		url := getUrl(imgPathName)
+		fmt.Println(url)
+		//ini文件路径
+		iniPath := iniFilePath + iniFileList[num]
+		f.WriteString(url + "\r\n")
 
-		for numb:=1;;numb++{
-			imgPath:=filePath+"/image/"+imgPathName+"/"+strconv.Itoa(numb)
-			if pathExist(imgPath){
+		for numb := 1; ; numb++ {
+			imgPath := filePath + "/image/" + imgPathName + "/" + strconv.Itoa(numb) + ".jpg"
+			if pathExist(imgPath) {
+				i++
+				f.WriteString("第" + strconv.Itoa(i) + "次上传\r\n")
+
 				//上传
 				respBody := doUpload(url, imgPath)
+				fmt.Println(respBody)
 
-				result:=analysisIni(iniPath,numb)
+				result := analysisIni(iniPath, numb)
 
-				judge:=match(result,respBody)
-				if judge{
-					fmt.Println("3")
-				}else {
-					fmt.Println("4")
+				f.WriteString(respBody + "\r\n")
+				judge := match(result, respBody)
+				if judge {
+					f.WriteString("匹配成功\r\n")
+					fmt.Println("成功")
+					j++
+				} else {
+					f.WriteString("匹配失败\r\n")
+					fmt.Println("失败")
+					k++
 				}
-			}else {
+			} else {
 				break
 			}
 		}
 	}
+	f.WriteString("共上传" + strconv.Itoa(i) + "次 ")
+	f.WriteString("成功" + strconv.Itoa(j) + "次 ")
+	f.WriteString("失败" + strconv.Itoa(k) + "次\r\n")
+	defer f.Close()
 }
