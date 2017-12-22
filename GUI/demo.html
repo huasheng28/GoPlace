@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="gb2312">
+    <title>图片上传接口测试程序</title>
+</head>
+<body>
+    <form action="">
+        <table>
+            <tr>
+                <td>网址：</td>
+                <td><input type="text" id="url"></td>
+            </tr>
+            <tr>
+                <td><input type="text" id="imgPath"></td>
+                <td><button id="choFile">选择图片</button></td>
+            </tr>
+            <tr>
+                <td><button id="uploadImg">上传测试</button></td>
+            </tr>
+        </table>
+        <input type="text" id="output">
+    </form>
+
+    <script type="text/tiscript">
+        self.ready =function(){
+            var img ="";
+            var url ="";
+            var path ="";
+            $(#choFile).on("click",function(){
+                const filter="Image Files (*.jpg,*.jpeg,*.gif,*.png)|*.jpg;*.jpeg;*.gif;*.png|All Files (*.*)|*.*";
+                const defaultExt = "jpg";
+                const initialPath = System.path(#USER_DOCUMENTS);
+                const caption = "选择图片";
+                img=view.selectFile(#open,filter,defaultExt,initialPath,caption);
+                $(#imgPath).text=img;
+                path = img;
+                return true;
+            });
+            $(#uploadImg).on("click",function(){
+                url =$(#url).text;
+                this.upload(url,path);
+            });
+
+        };
+    </script>
+</body>
+</html>
