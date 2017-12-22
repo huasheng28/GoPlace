@@ -115,7 +115,7 @@ func pathExist(path string) bool {
 	}
 }
 
-func main() {
+func circle() {
 	filePath, _ := os.Getwd()
 	//ini文件夹路径
 	iniFilePath := filePath + "/ini/"
