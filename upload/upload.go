@@ -1,49 +1,19 @@
 package upload
 
 import (
-	"strconv"
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
-	"regexp"
-	"strings"
+	"mime/multipart"
 	"net/http"
 	"os"
-	"bytes"
-	"mime/multipart"
 	"path/filepath"
-	"io"
-	"github.com/go-ini/ini"
+	"strings"
+	"encoding/csv"
+	"regexp"
+	"encoding/json"
 )
-
-func getIniFileName(path string) []string {
-	//输入ini文件夹路径，输出包含所有ini文件名称的slice
-	f, err := ioutil.ReadDir(path)
-	if err != nil {
-		fmt.Println(err)
-	}
-	var iniFile []string
-	for _, n := range f {
-		v := n.Name()
-		reg, _ := regexp.MatchString(".ini", v)
-		if reg {
-			iniFile = append(iniFile, v)
-		}
-	}
-	return iniFile
-}
-
-func getUrl1(path string, num int) (url1 string) {
-	//输入ini文件夹路径，输出img文件夹名称
-	return strings.Replace(getIniFileName(path)[num], ".ini", "", -1)
-}
-
-func getUrl(url1 string) string {
-	//输出url
-	url2 := strings.Replace(url1, "+", "/", -1)
-	url3 := strings.Replace(url2, "%", ".", -1)
-	url := "http://" + url3
-	return url
-}
 
 func check(err error) {
 	if err != nil {
@@ -51,6 +21,7 @@ func check(err error) {
 	}
 }
 
+//上传文件操作
 func newRequest(url string, params map[string]string, paramName, path string) (*http.Request, error) {
 	file, err := os.Open(path)
 	check(err)
@@ -60,7 +31,7 @@ func newRequest(url string, params map[string]string, paramName, path string) (*
 	part, err := writer.CreateFormFile(paramName, filepath.Base(path))
 	check(err)
 	_, err = io.Copy(part, file)
-
+	check(err)
 	for key, val := range params {
 		_ = writer.WriteField(key, val)
 	}
@@ -70,13 +41,9 @@ func newRequest(url string, params map[string]string, paramName, path string) (*
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	return req, err
 }
-
-func doUpload(url string, path string) string {
+func DoUpload(url string, path string, paramName string,extraParam map[string]string) string {
 	body := &bytes.Buffer{}
-	extraParams := map[string]string{
-		"type": "1/jpeg",
-	}
-	req, err := newRequest(url, extraParams, "file", path)
+	req, err := newRequest(url, extraParam, paramName, path)
 	check(err)
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -84,88 +51,89 @@ func doUpload(url string, path string) string {
 		fmt.Println(err)
 	} else {
 		_, err := body.ReadFrom(resp.Body)
-		if err != nil {
-			fmt.Println(err)
-		}
+		check(err)
 		resp.Body.Close()
 	}
 	return body.String()
 }
 
-func analysisIni(iniPath string, num int) (result string) {
-	sec := strconv.Itoa(num)
-	cfg, err := ini.Load(iniPath)
+//获取csv文件名切片，不带后缀
+func CsvNameSlice() []string {
+	currentPath ,_:= os.Getwd()
+	csvFilePath := currentPath + "/csv/"
+	f, err := ioutil.ReadDir(csvFilePath)
 	check(err)
-	result = cfg.Section(sec).Key("result").String()
-	return result
-}
-
-func match(result string, respBody string) bool {
-	rt := regexp.QuoteMeta(result)
-	ry := regexp.QuoteMeta(respBody)
-	return strings.Contains(ry, rt)
-}
-
-func pathExist(path string) bool {
-	_, err := os.Stat(path)
-	if err != nil && os.IsNotExist(err) {
-		return false
-	} else {
-		return true
-	}
-}
-
-func circle() {
-	filePath, _ := os.Getwd()
-	//ini文件夹路径
-	iniFilePath := filePath + "/ini/"
-	iniFileList := getIniFileName(iniFilePath)
-
-	//创建log.txt
-	f, err := os.OpenFile("log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	check(err)
-	i, j, k := 0, 0, 0
-
-	for num := 0; num < len(iniFileList); num++ {
-		//图片文件夹名称
-		imgPathName := getUrl1(iniFilePath, num)
-		//http://dshfjsbadhfbs.dsf
-		url := getUrl(imgPathName)
-		fmt.Println(url)
-		//ini文件路径
-		iniPath := iniFilePath + iniFileList[num]
-		f.WriteString(url + "\r\n")
-
-		for numb := 1; ; numb++ {
-			imgPath := filePath + "/image/" + imgPathName + "/" + strconv.Itoa(numb) + ".jpg"
-			if pathExist(imgPath) {
-				i++
-				f.WriteString("第" + strconv.Itoa(i) + "次上传\r\n")
-
-				//上传
-				respBody := doUpload(url, imgPath)
-				fmt.Println(respBody)
-
-				result := analysisIni(iniPath, numb)
-
-				f.WriteString(respBody + "\r\n")
-				judge := match(result, respBody)
-				if judge {
-					f.WriteString("匹配成功\r\n")
-					fmt.Println("成功")
-					j++
-				} else {
-					f.WriteString("匹配失败\r\n")
-					fmt.Println("失败")
-					k++
-				}
-			} else {
-				break
-			}
+	var csvNameSlice []string
+	for _, n := range f {
+		v := n.Name()
+		reg, _ := regexp.MatchString(".csv", v)
+		if reg {
+			b := strings.Replace(v, ".csv", "", -1)
+			csvNameSlice = append(csvNameSlice, b)
 		}
 	}
-	f.WriteString("共上传" + strconv.Itoa(i) + "次 ")
-	f.WriteString("成功" + strconv.Itoa(j) + "次 ")
-	f.WriteString("失败" + strconv.Itoa(k) + "次\r\n")
+	return csvNameSlice
+}
+
+//将csv文件名转换成api地址
+func ApiUrlSlice(csvNameSlice []string) []string {
+	var apiUrlSlice []string
+	for _, a := range csvNameSlice {
+		b := strings.Replace(a, "+", "/", -1)
+		c := strings.Replace(b, "%", ".", -1)
+		d := "http://" + c
+		apiUrlSlice = append(apiUrlSlice, d)
+	}
+	return apiUrlSlice
+}
+
+func ApiUrlText(csvName string) string {
+	b := strings.Replace(csvName, "+", "/", -1)
+	c := strings.Replace(b, "%", ".", -1)
+	d := "http://" + c
+	return d
+}
+
+//读取csv文件，返回文件中的参数和参数数量
+func ReadCsvFile(csvName string) ([]string, []string, int,string,map[string]string) {
+	//读取文件
+	currentPath, _ := os.Getwd()
+	csvFile := currentPath + "/csv/" + csvName + ".csv"
+	f, err := os.Open(csvFile)
+	check(err)
 	defer f.Close()
+	r := csv.NewReader(f)
+	record, err := r.ReadAll()
+	check(err)
+	//图片数量
+	picNum := len(record)-1
+	//上传参数
+	paramName:=record[0][0]
+	//其他参数
+	//extraParamJson:=record[0][1]
+	//var extraParam map[string]string
+	//err1 := json.Unmarshal([]byte(extraParamJson), &extraParam)
+	//check(err1)
+	var extraParam map[string]string
+	extraParamJson:=record[0][1]
+	if extraParamJson==""{
+		extraParam=map[string]string{}
+	}else {
+		err1 := json.Unmarshal([]byte(extraParamJson), &extraParam)
+		check(err1)
+	}
+	//图片地址及正确返回参数
+	var imgName, rightResult []string
+	for _, a := range record[1:] {
+		imgName = append(imgName, a[0])
+		rightResult = append(rightResult, a[1])
+	}
+	return imgName, rightResult, picNum,paramName,extraParam
+}
+
+//判断返回数据是否与cav文件中一致
+func Imatch(rightResult string,respBody string) bool{
+	a:=regexp.QuoteMeta(rightResult)
+	b:=regexp.QuoteMeta(respBody)
+	return strings.Contains(b, a)
 }
