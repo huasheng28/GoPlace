@@ -28,16 +28,16 @@ func addUrlOption(root *sciter.Element){
 	}
 }
 
+//获取选择文件夹的图片数量
 func defineFunc(w *window.Window){
-	//获取选择文件夹的图片数量
 	w.DefineFunction("picNum", func(args ...*sciter.Value) *sciter.Value {
 		_,_,picNum,_,_:=upload.ReadCsvFile(args[0].String())
 		return sciter.NewValue(picNum)
 	})
 }
 
+//将图片数量转换成文字
 func defMethod(root *sciter.Element) {
-	//将图片数量转换成文字
 	numP, _ := root.SelectById("imgNum")
 	numP.DefineMethod("picPa", func(args ...*sciter.Value) *sciter.Value {
 		numText:="共有"+args[0].String()+"张图片"
@@ -46,12 +46,23 @@ func defMethod(root *sciter.Element) {
 	})
 }
 
+//创建li元素
+func printLi(addText string,obj *sciter.Element)  *sciter.Value{
+	add,_:=sciter.CreateElement("li",addText)
+	//add.SetAttr("class","output")
+	err:=obj.Insert(add,1)
+	check(err)
+	return sciter.NullValue()
+}
+
 func defMethod1(root *sciter.Element)  {
 	//上传按钮
 	beginBtn,_:=root.SelectById("begin")
-	//args:csvName,url
+	//args:csvName
 	beginBtn.DefineMethod("startUpload", func(args ...*sciter.Value) *sciter.Value {
+		upload.WriteTimeToFile()
 		url:=upload.ApiUrlText(args[0].String())
+		upload.WriteFile(url)
 		imgName, rightResult, _,paramName,extraParam:=upload.ReadCsvFile(args[0].String())
 		//把图片名称转换为图片地址
 		currentPath,_:=os.Getwd()
@@ -63,8 +74,9 @@ func defMethod1(root *sciter.Element)  {
 		//开始上传并输出
 		var respBody string
 		var total,sucs,fail=0,0,0
-		outPutObj,_:=root.SelectById("#output")
+		//outPutObj,_:=root.SelectById("#output")
 		for i, j :=range imgPath{
+
 			respBody=upload.DoUpload(url, j,paramName,extraParam)
 			fmt.Println(respBody)
 			total++
@@ -73,43 +85,25 @@ func defMethod1(root *sciter.Element)  {
 				fmt.Println("2")
 				sucs++
 				succText:=imgName[i]+"返回结果："+respBody+"，识别成功。"
-				//outPutObj.CallMethod("addLi1",sciter.NewValue("safdg"))
-				addSucc,_:=sciter.CreateElement("li",succText)
-				addSucc.SetAttr("class","output")
-				err:=outPutObj.Insert(addSucc,i)
-				check(err)
+				upload.WriteFile(succText)
+				//printLi(succText,outPutObj)
+				beginBtn.CallMethod("fac",sciter.NewValue(succText))
 			}else {
 				fmt.Println("3")
 				fail++
 				failText:=imgName[i]+"返回结果："+respBody+"，正确结果："+rightResult[i]+"，识别失败。"
-				//outPutObj.CallMethod("addLi1",sciter.NewValue("hhhaaa"))
-				addFail,err:=sciter.CreateElement("li",failText)
-				addFail.SetAttr("class","output")
-				check(err)
-				err1:=outPutObj.Insert(addFail,i)
-				check(err1)
+				upload.WriteFile(failText)
+				//printLi(failText,outPutObj)
+				beginBtn.CallMethod("fac",sciter.NewValue(failText))
 			}
 		}
 		fmt.Println("4")
 		sumObj,_:=root.SelectById("summery")
 		totalText:="共上传"+strconv.Itoa(total)+"张图片，其中识别成功"+strconv.Itoa(sucs)+"张，识别失败"+strconv.Itoa(fail)+"张。"
-		//sumObj.CallMethod("addLi2",sciter.NewValue(totalText))
-		addTotal,err:=sciter.CreateElement("li",totalText)
-		addTotal.SetAttr("class","output")
-		check(err)
-		err1:=sumObj.Insert(addTotal,1)
-		check(err1)
+		upload.WriteFile(totalText)
+		printLi(totalText,sumObj)
 		return sciter.NullValue()
 	})
-
-	////清除按钮
-	//clearBtn,_:=root.SelectById("clear")
-	//clearBtn.DefineMethod("clearLi", func(args ...*sciter.Value) *sciter.Value {
-	//
-	//})
-
-
-
 }
 
 func main() {
@@ -118,25 +112,19 @@ func main() {
 		//设置窗口大小
 		&sciter.Rect{Left: 300, Top: 300, Right: 800, Bottom: 800})
 	check(err)
-
 	//载入html
 	w.LoadFile("F:/Code/GoPlace/imgup/demo.html")
 
 	root, _ := w.GetRootElement()
-
 	addUrlOption(root)
-
 	defineFunc(w)
-
 	defMethod(root)
 	defMethod1(root)
 
 	//设置标题
 	w.SetTitle("图片上传接口测试程序")
-
 	//显示窗口
 	w.Show()
-
 	//运行
 	w.Run()
 }

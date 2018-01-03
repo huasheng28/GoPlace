@@ -10,7 +10,6 @@
     </style>
 </head>
 <body>
-
     <select id="choose">
         <option value="0" id="url" selected></option>
     </select>
@@ -44,8 +43,20 @@
             {{/*view.msgbox(#warning, url);*/}}
             this.startUpload(csvName);
         };
+        //创建元素
+        $(#begin).fac=function (tet) {
+            var liz = new Element("li");
+            $(ul#output).append(liz);
+            liz.text=tet;
+            $(#output>li).refresh();
+        };
+        //清除按钮
         $(#clear).onClick=function(){
-            $(li[class="output"]).remove();
+            var outputLi=$(ul[id='output']).$$(li);
+            for(var liz in outputLi){
+                liz.remove();
+            }
+            $(ul[id='summery']>li).remove();
         };
     </script>
 </body>

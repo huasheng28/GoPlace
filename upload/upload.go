@@ -13,6 +13,7 @@ import (
 	"encoding/csv"
 	"regexp"
 	"encoding/json"
+	"time"
 )
 
 func check(err error) {
@@ -110,10 +111,6 @@ func ReadCsvFile(csvName string) ([]string, []string, int,string,map[string]stri
 	//上传参数
 	paramName:=record[0][0]
 	//其他参数
-	//extraParamJson:=record[0][1]
-	//var extraParam map[string]string
-	//err1 := json.Unmarshal([]byte(extraParamJson), &extraParam)
-	//check(err1)
 	var extraParam map[string]string
 	extraParamJson:=record[0][1]
 	if extraParamJson==""{
@@ -136,4 +133,19 @@ func Imatch(rightResult string,respBody string) bool{
 	a:=regexp.QuoteMeta(rightResult)
 	b:=regexp.QuoteMeta(respBody)
 	return strings.Contains(b, a)
+}
+
+//输出文件
+func WriteFile(outText string){
+	f, err := os.OpenFile("log.csv", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	check(err)
+	defer f.Close()
+	f.WriteString(outText+",\r\n")
+}
+//输出当前时间到文件
+func WriteTimeToFile()  {
+	timestamp := time.Now().Unix()
+	tm := time.Unix(timestamp, 0)
+	text:=tm.Format("2006-01-02 03:04:05 PM")
+	WriteFile(text)
 }
