@@ -91,7 +91,7 @@ func ApiUrlSlice(csvNameSlice []string) []string {
 func ApiUrlText(csvName string) string {
 	b := strings.Replace(csvName, "+", "/", -1)
 	c := strings.Replace(b, "%", ".", -1)
-	d := "http://" + c
+	d := strings.Replace(c,"@","://",-1)
 	return d
 }
 
@@ -141,6 +141,10 @@ func WriteFile(outText string){
 	check(err)
 	defer f.Close()
 	f.WriteString(outText+",\r\n")
+	//buffer := new(bytes.Buffer)
+	//writer := csv.NewWriter(buffer)
+	//writer.Write([]string{outText})
+	//writer.Flush()
 }
 //输出当前时间到文件
 func WriteTimeToFile()  {
@@ -148,4 +152,10 @@ func WriteTimeToFile()  {
 	tm := time.Unix(timestamp, 0)
 	text:=tm.Format("2006-01-02 03:04:05 PM")
 	WriteFile(text)
+}
+
+//将返回值中的逗号替换掉
+func RespCsv(respBody string)string{
+	a:=strings.Replace(respBody,",","%",-1)
+	return a
 }
