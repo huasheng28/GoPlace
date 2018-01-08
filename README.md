@@ -1,2 +1,2 @@
 # GoPlace
-Go-bindings for my local projects.
+My local Go projects.

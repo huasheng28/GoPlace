@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/huasheng28/GoPlace/upload"
+	"upload"
 	"os"
 	"strconv"
 )
