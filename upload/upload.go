@@ -2,17 +2,19 @@ package upload
 
 import (
 	"bytes"
+	"encoding/csv"
+	"encoding/json"
 	"fmt"
+	"github.com/axgle/mahonia"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
-	"encoding/csv"
 	"regexp"
-	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -42,25 +44,30 @@ func newRequest(url string, params map[string]string, paramName, path string) (*
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	return req, err
 }
-func DoUpload(url string, path string, paramName string,extraParam map[string]string) string {
+func DoUpload(url string, path string, paramName string, extraParam map[string]string) (bodyz string) {
 	body := &bytes.Buffer{}
 	req, err := newRequest(url, extraParam, paramName, path)
 	check(err)
-	client := &http.Client{}
+	client := http.Client{
+		Timeout: 60 * time.Second,
+	}
 	resp, err := client.Do(req)
-	if err != nil {
+	if e, ok := err.(net.Error); ok && e.Timeout() {
+		bodyz = ""
+	} else if err != nil {
 		fmt.Println(err)
 	} else {
 		_, err := body.ReadFrom(resp.Body)
 		check(err)
 		resp.Body.Close()
+		bodyz = body.String()
 	}
-	return body.String()
+	return bodyz
 }
 
 //获取csv文件名切片，不带后缀
 func CsvNameSlice() []string {
-	currentPath ,_:= os.Getwd()
+	currentPath, _ := os.Getwd()
 	csvFilePath := currentPath + "/csv/"
 	f, err := ioutil.ReadDir(csvFilePath)
 	check(err)
@@ -82,7 +89,7 @@ func ApiUrlSlice(csvNameSlice []string) []string {
 	for _, a := range csvNameSlice {
 		b := strings.Replace(a, "+", "/", -1)
 		c := strings.Replace(b, "%", ".", -1)
-		d := "http://" + c
+		d := strings.Replace(c, "@", "://", -1)
 		apiUrlSlice = append(apiUrlSlice, d)
 	}
 	return apiUrlSlice
@@ -91,12 +98,12 @@ func ApiUrlSlice(csvNameSlice []string) []string {
 func ApiUrlText(csvName string) string {
 	b := strings.Replace(csvName, "+", "/", -1)
 	c := strings.Replace(b, "%", ".", -1)
-	d := strings.Replace(c,"@","://",-1)
+	d := strings.Replace(c, "@", "://", -1)
 	return d
 }
 
 //读取csv文件，返回文件中的参数和参数数量
-func ReadCsvFile(csvName string) ([]string, []string, int,string,map[string]string) {
+func ReadCsvFile(csvName string) ([]string, []string, int, string, map[string]string) {
 	//读取文件
 	currentPath, _ := os.Getwd()
 	csvFile := currentPath + "/csv/" + csvName + ".csv"
@@ -107,15 +114,15 @@ func ReadCsvFile(csvName string) ([]string, []string, int,string,map[string]stri
 	record, err := r.ReadAll()
 	check(err)
 	//图片数量
-	picNum := len(record)-1
+	picNum := len(record) - 1
 	//上传参数
-	paramName:=record[0][0]
+	paramName := record[0][0]
 	//其他参数
 	var extraParam map[string]string
-	extraParamJson:=record[0][1]
-	if extraParamJson==""{
-		extraParam=map[string]string{}
-	}else {
+	extraParamJson := record[0][1]
+	if extraParamJson == "" {
+		extraParam = map[string]string{}
+	} else {
 		err1 := json.Unmarshal([]byte(extraParamJson), &extraParam)
 		check(err1)
 	}
@@ -125,37 +132,35 @@ func ReadCsvFile(csvName string) ([]string, []string, int,string,map[string]stri
 		imgName = append(imgName, a[0])
 		rightResult = append(rightResult, a[1])
 	}
-	return imgName, rightResult, picNum,paramName,extraParam
+	return imgName, rightResult, picNum, paramName, extraParam
 }
 
 //判断返回数据是否与cav文件中一致
-func Imatch(rightResult string,respBody string) bool{
-	a:=regexp.QuoteMeta(rightResult)
-	b:=regexp.QuoteMeta(respBody)
+func Imatch(rightResult string, respBody string) bool {
+	a := regexp.QuoteMeta(rightResult)
+	b := regexp.QuoteMeta(respBody)
 	return strings.Contains(b, a)
 }
 
 //输出文件
-func WriteFile(outText string){
+func WriteFile(outText string) {
 	f, err := os.OpenFile("log.csv", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	check(err)
 	defer f.Close()
-	f.WriteString(outText+",\r\n")
-	//buffer := new(bytes.Buffer)
-	//writer := csv.NewWriter(buffer)
-	//writer.Write([]string{outText})
-	//writer.Flush()
+	enc := mahonia.NewEncoder("gbk").ConvertString(outText)
+	f.WriteString(enc + ",\r\n")
 }
+
 //输出当前时间到文件
-func WriteTimeToFile()  {
+func WriteTimeToFile() {
 	timestamp := time.Now().Unix()
 	tm := time.Unix(timestamp, 0)
-	text:=tm.Format("2006-01-02 03:04:05 PM")
+	text := tm.Format("2006-01-02 03:04:05 PM")
 	WriteFile(text)
 }
 
 //将返回值中的逗号替换掉
-func RespCsv(respBody string)string{
-	a:=strings.Replace(respBody,",","%",-1)
+func RespCsv(respBody string) string {
+	a := strings.Replace(respBody, ",", "%", -1)
 	return a
 }
