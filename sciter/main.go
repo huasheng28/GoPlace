@@ -3,12 +3,10 @@ package main
 import (
 	"github.com/sciter-sdk/go-sciter"
 	"github.com/sciter-sdk/go-sciter/window"
-	"github.com/huasheng28/GoPlace/upload"
+	"upload"
 	"fmt"
 	"os"
 	"strconv"
-	"bytes"
-	"io"
 )
 
 func check(err error)  {
@@ -99,7 +97,6 @@ func defMethod1(root *sciter.Element,w *window.Window)  {
 				//printLi(failText,outPutObj)
 				beginBtn.CallMethod("fac",sciter.NewValue(failText))
 			}
-			w.LoadHtml()
 		}
 		fmt.Println("4")
 		sumObj,_:=root.SelectById("summery")
@@ -117,13 +114,13 @@ func main() {
 		&sciter.Rect{Left: 300, Top: 300, Right: 800, Bottom: 800})
 	check(err)
 	//载入html
-	w.LoadFile("F:/Code/GoPlace/imgup/demo.html")
+	w.LoadFile("F:/Code/GoPlace/sciter/demo.html")
 
 	root, _ := w.GetRootElement()
 	addUrlOption(root)
 	defineFunc(w)
 	defMethod(root)
-	defMethod1(root)
+	defMethod1(root,w)
 
 
 	//设置标题
