@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net"
 	"net/http"
+	"net/textproto"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -20,33 +21,54 @@ import (
 
 func check(err error) {
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 }
 
 //上传文件操作
-func newRequest(url string, params map[string]string, paramName, path string) (*http.Request, error) {
+func CreateExFormFile(w *multipart.Writer, fieldname string, filename string) (io.Writer, error) {
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s"`, fieldname, filename))
+	h.Set("Content-Type", "image/jpeg")
+	return w.CreatePart(h)
+}
+
+var fileName string
+
+func newRequest(url string, extraParam map[string]string, paramName, path string, headers map[string]string) (*http.Request, error) {
 	file, err := os.Open(path)
 	check(err)
 	defer file.Close()
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile(paramName, filepath.Base(path))
+	if len(headers) != 0 {
+		fileName = filepath.Base(path) + ";type=image/jpeg"
+	} else {
+		fileName = filepath.Base(path)
+	}
+	part, err := CreateExFormFile(writer, paramName, fileName)
+	//part, err := writer.CreateFormFile("pic", filepath.Base(path))
 	check(err)
 	_, err = io.Copy(part, file)
 	check(err)
-	for key, val := range params {
-		_ = writer.WriteField(key, val)
+	if extraParam != nil {
+		for key, val := range extraParam {
+			_ = writer.WriteField(key, val)
+		}
 	}
-	err = writer.Close()
-	check(err)
+	writer.Close()
 	req, err := http.NewRequest("POST", url, body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if headers != nil {
+		for k, v := range headers {
+			req.Header.Add(k, v)
+		}
+	}
 	return req, err
 }
-func DoUpload(url string, path string, paramName string, extraParam map[string]string) (bodyz string) {
+func DoUpload(url string, path string, paramName string, extraParam map[string]string, headers map[string]string) (bodyz string) {
 	body := &bytes.Buffer{}
-	req, err := newRequest(url, extraParam, paramName, path)
+	req, err := newRequest(url, extraParam, paramName, path, headers)
 	check(err)
 	client := http.Client{
 		Timeout: 60 * time.Second,
@@ -59,9 +81,10 @@ func DoUpload(url string, path string, paramName string, extraParam map[string]s
 	} else {
 		_, err := body.ReadFrom(resp.Body)
 		check(err)
-		resp.Body.Close()
+		defer resp.Body.Close()
 		bodyz = body.String()
 	}
+	fmt.Println(bodyz)
 	return bodyz
 }
 
@@ -103,7 +126,7 @@ func ApiUrlText(csvName string) string {
 }
 
 //读取csv文件，返回文件中的参数和参数数量
-func ReadCsvFile(csvName string) ([]string, []string, int, string, map[string]string) {
+func ReadCsvFile(csvName string) ([]string, []string, int, string, map[string]string, map[string]string) {
 	//读取文件
 	currentPath, _ := os.Getwd()
 	csvFile := currentPath + "/csv/" + csvName + ".csv"
@@ -117,14 +140,35 @@ func ReadCsvFile(csvName string) ([]string, []string, int, string, map[string]st
 	picNum := len(record) - 1
 	//上传参数
 	paramName := record[0][0]
-	//其他参数
-	var extraParam map[string]string
-	extraParamJson := record[0][1]
-	if extraParamJson == "" {
-		extraParam = map[string]string{}
+	var extraParam, headers map[string]string
+	//param
+	if len(record[0]) == 2 {
+		extraParamJson := record[0][1]
+		if extraParamJson == "" {
+			extraParam = nil
+		} else {
+			err1 := json.Unmarshal([]byte(extraParamJson), &extraParam)
+			check(err1)
+		}
+		headers = map[string]string{}
+	} else if len(record[0]) == 3 {
+		extraParamJson := record[0][1]
+		if extraParamJson == "" {
+			extraParam = nil
+		} else {
+			err1 := json.Unmarshal([]byte(extraParamJson), &extraParam)
+			check(err1)
+		}
+		//请求头
+		headersJson := record[0][2]
+		if headersJson == "" {
+			headers = nil
+		} else {
+			err2 := json.Unmarshal([]byte(headersJson), &headers)
+			check(err2)
+		}
 	} else {
-		err1 := json.Unmarshal([]byte(extraParamJson), &extraParam)
-		check(err1)
+		panic("wrong file format")
 	}
 	//图片地址及正确返回参数
 	var imgName, rightResult []string
@@ -132,7 +176,7 @@ func ReadCsvFile(csvName string) ([]string, []string, int, string, map[string]st
 		imgName = append(imgName, a[0])
 		rightResult = append(rightResult, a[1])
 	}
-	return imgName, rightResult, picNum, paramName, extraParam
+	return imgName, rightResult, picNum, paramName, extraParam, headers
 }
 
 //判断返回数据是否与cav文件中一致

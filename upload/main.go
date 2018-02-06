@@ -3,16 +3,16 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"upload"
 	"os"
 	"strconv"
+	"upload"
 )
 
 func startCycle(csvName string) {
 	upload.WriteTimeToFile()
 	url := upload.ApiUrlText(csvName)
 	upload.WriteFile(url)
-	imgName, rightResult, picNum, paramName, extraParam := upload.ReadCsvFile(csvName)
+	imgName, rightResult, picNum, paramName, extraParam, headers := upload.ReadCsvFile(csvName)
 	//把图片名称转换为图片地址
 	currentPath, _ := os.Getwd()
 	var imgPath []string
@@ -25,7 +25,7 @@ func startCycle(csvName string) {
 	var total, sucs, fail, timeout = 0, 0, 0, 0
 	for i, j := range imgPath {
 		fmt.Printf("正在测试[" + strconv.Itoa(i+1) + "/" + strconv.Itoa(picNum) + "]...")
-		respBody = upload.DoUpload(url, j, paramName, extraParam)
+		respBody = upload.DoUpload(url, j, paramName, extraParam, headers)
 		if respBody == "" {
 			timeout++
 			fmt.Println("连接超时")
