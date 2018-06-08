@@ -17,3 +17,4 @@
 .idea/
 
 test/
+pkg/windows_386/upload.a
