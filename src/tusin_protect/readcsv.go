@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-
 	"strconv"
 )
 
@@ -47,6 +46,24 @@ func ReadCsv() (int, int, []string, []string, []string, []string, []string) {
 		} else if i == 6 {
 			receiverSlice = line
 		}
+		//switch {
+		//	case i==0:
+		//		delaytimes = line[0]
+		//		delaytime, _ = strconv.Atoi(delaytimes)
+		//	case i == 1:
+		//		outtimes = line[0]
+		//		outtime, _ = strconv.Atoi(outtimes)
+		//	case i == 2:
+		//		urlSlice = line
+		//	case i == 3:
+		//		pathSlice = line
+		//	case i == 4:
+		//		phoneSlice = line
+		//	case i == 5:
+		//		emailSlice = line
+		//	case i == 6:
+		//		receiverSlice = line
+		//}
 		i++
 	}
 	return delaytime, outtime, urlSlice, pathSlice, phoneSlice, emailSlice, receiverSlice

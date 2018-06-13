@@ -29,6 +29,7 @@ func main()  {
 			continue
 		}else {
 			tusin_protect.Restarts(a[i][1])
+			tusin_protect.SendEmail(emailSlice[0],emailSlice[1],receiverSlice)
 		}
 	}
 
