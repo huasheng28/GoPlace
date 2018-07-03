@@ -8,7 +8,7 @@ func TraversFolder(imgFolder string) (imgNames []string) {
 	for _,file := range files{
 		imgNames = append(imgNames, file.Name())
 	}
-	return
+	return imgNames
 }
 
 func ImgPathSlice(imgFolder string) (imgPathSlice []string) {
@@ -18,5 +18,5 @@ func ImgPathSlice(imgFolder string) (imgPathSlice []string) {
 		imgPath = imgFolder+"/"+imgName
 		imgPathSlice =append(imgPathSlice,imgPath)
 	}
-	return
+	return imgPathSlice
 }

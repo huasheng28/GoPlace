@@ -25,7 +25,7 @@ type ARequest struct {
 func check(err error) {
 	if err != nil {
 		fmt.Println(err)
-		WriteToFile("错误："+err.Error())
+		WriteToFile("Error:"+err.Error())
 	}
 }
 
@@ -43,6 +43,10 @@ func newRequest(reqHand ARequest, imgPath string) (*http.Request, error) {
 	check(err)
 	defer file.Close()
 
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	defer writer.Close()
+
 	//判断是否存在请求头
 	//后缀是否添加有待商榷，加了有时候会出问题
 	var fileName string
@@ -53,9 +57,6 @@ func newRequest(reqHand ARequest, imgPath string) (*http.Request, error) {
 	//}
 
 	//添加请求体格式
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	defer writer.Close()
 	part, err := createFormFile(writer, reqHand.ImgParam, fileName)
 	check(err)
 	_, err = io.Copy(part, file)
@@ -85,18 +86,20 @@ func DoUpload(reqHand ARequest, imgPath string) (respBody string) {
 	client := http.Client{
 		Timeout: time.Duration(reqHand.OutTime) * time.Second,
 	}
+	fmt.Println(req.URL)
 	resp, err := client.Do(req)
+	fmt.Println(req.URL)
 	if e, ok := err.(net.Error); ok && e.Timeout() {
 		respBody = "timeout"
 	} else if err != nil {
-		fmt.Println(err)
-		WriteToFile("错误："+err.Error())
+		fmt.Println("Error:",err)
+		WriteToFile("Error:"+err.Error())
 	} else {
 		_, err := body.ReadFrom(resp.Body)
 		check(err)
+		defer resp.Body.Close()
 		respBody = body.String()
 	}
-	defer resp.Body.Close()
 	fmt.Println(respBody)
 	return respBody
 }

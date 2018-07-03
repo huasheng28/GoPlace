@@ -10,15 +10,14 @@ import (
 
 func main() {
 	reqSlice := imgUpload.ReadEntryCsv()
-	var text,respBody,imgName string
+	var text string
 	for _,req:=range reqSlice{
 		imgPathSlice := imgUpload.ImgPathSlice(req.ImgFolder)
 		for i,imgPath :=range imgPathSlice{
 			fmt.Printf("正在测试[" + strconv.Itoa(i+1) + "/" + strconv.Itoa(len(imgPathSlice)) + "]...")
 			fmt.Println(imgPath)
-			imgName = filepath.Base(imgPath)
-			respBody = imgUpload.DoUpload(req, imgPath)
-
+			imgName := filepath.Base(imgPath)
+			respBody := imgUpload.DoUpload(req, imgPath)
 			if respBody=="timeout"{
 				text = imgName + "连接超时重试一次"
 				fmt.Println(text)

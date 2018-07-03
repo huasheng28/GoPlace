@@ -25,7 +25,8 @@ func stringToMap(recordString string) (jsonMap map[string]string) {
 	return jsonMap
 }
 
-func ReadEntryCsv() (reqS []ARequest) {
+func ReadEntryCsv() []ARequest {
+	var reqS []ARequest
 	dir :=GetRootFolder()
 	entryCsv :=dir + "/entry.csv"
 	file, err := os.Open(entryCsv)
@@ -36,15 +37,16 @@ func ReadEntryCsv() (reqS []ARequest) {
 	records, err := reader.ReadAll()
 	check(err)
 
-	var req ARequest
 	for _,record:=range records{
+		var req ARequest
 		req.Url = record[0]
 		req.ImgParam = record[1]
 		req.ImgFolder = record[2]
 		req.OutTime,_=strconv.Atoi(record[3])
 		req.Headers = stringToMap(record[4])
 		req.Params = stringToMap(record[5])
+
 		reqS=append(reqS, req)
 	}
-	return
+	return reqS
 }
