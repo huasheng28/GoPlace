@@ -17,4 +17,14 @@
 .idea/
 
 test/
-pkg/windows_386/upload.a
+pkg/
+
+*.jpg
+*.gif
+*.png
+
+*.csv
+/test.go
+
+src/beego
+src/cli

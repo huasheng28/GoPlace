@@ -33,7 +33,7 @@ func createFormFile(w *multipart.Writer, fieldname string, filename string) (io.
 	//构成请求体格式
 	h := make(textproto.MIMEHeader)
 	h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s"`, fieldname, filename))
-	h.Set("Content-Type", "image/jpeg")
+	//h.Set("Content-Type", "image/jpeg")
 	return w.CreatePart(h)
 }
 
@@ -68,37 +68,38 @@ func newRequest(reqHand ARequest, imgPath string) (*http.Request, error) {
 	}
 
 	req, err := http.NewRequest("POST", reqHand.Url, body)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
+	req.Header.Add("Content-Type", writer.FormDataContentType())
+	//req.Header.Add("ContentLength",strconv.Itoa(body.Len()+68))
 	if reqHand.Headers != nil {
 		for k, v := range reqHand.Headers {
 			req.Header.Add(k, v)
 		}
 	}
 
+	//为什么多了68字节啊？？？？？？
+	req.ContentLength=int64(body.Len()+68)
 	return req, err
 }
 
 func DoUpload(reqHand ARequest, imgPath string) (respBody string) {
-	body := &bytes.Buffer{}
+	bodya := &bytes.Buffer{}
 	req, err := newRequest(reqHand, imgPath)
 	check(err)
 	client := http.Client{
 		Timeout: time.Duration(reqHand.OutTime) * time.Second,
 	}
-	fmt.Println(req.URL)
+
 	resp, err := client.Do(req)
-	fmt.Println(req.URL)
+
 	if e, ok := err.(net.Error); ok && e.Timeout() {
 		respBody = "timeout"
 	} else if err != nil {
-		fmt.Println("Error:",err)
-		WriteToFile("Error:"+err.Error())
+		check(err)
 	} else {
-		_, err := body.ReadFrom(resp.Body)
+		_, err := bodya.ReadFrom(resp.Body)
 		check(err)
 		defer resp.Body.Close()
-		respBody = body.String()
+		respBody = bodya.String()
 	}
 	fmt.Println(respBody)
 	return respBody

@@ -41,11 +41,12 @@ func newRequest(url string, extraParam map[string]string, paramName, path string
 	defer file.Close()
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	if len(headers) != 0 {
-		fileName = filepath.Base(path) + ";type=image/jpeg"
-	} else {
-		fileName = filepath.Base(path)
-	}
+	//if len(headers) != 0 {
+	//	fileName = filepath.Base(path) + ";type=image/jpeg"
+	//} else {
+	fileName = filepath.Base(path)
+	//}
+	fmt.Println(fileName)
 	part, err := CreateExFormFile(writer, paramName, fileName)
 	//part, err := writer.CreateFormFile("pic", filepath.Base(path))
 	check(err)
@@ -66,6 +67,7 @@ func newRequest(url string, extraParam map[string]string, paramName, path string
 	}
 	return req, err
 }
+
 func DoUpload(url string, path string, paramName string, extraParam map[string]string, headers map[string]string) (bodyz string) {
 	body := &bytes.Buffer{}
 	req, err := newRequest(url, extraParam, paramName, path, headers)
@@ -75,7 +77,7 @@ func DoUpload(url string, path string, paramName string, extraParam map[string]s
 	}
 	resp, err := client.Do(req)
 	if e, ok := err.(net.Error); ok && e.Timeout() {
-		bodyz = ""
+		bodyz = "timeout"
 	} else if err != nil {
 		fmt.Println(err)
 	} else {
@@ -193,6 +195,7 @@ func WriteFile(outText string) {
 	defer f.Close()
 	enc := mahonia.NewEncoder("gbk").ConvertString(outText)
 	f.WriteString(enc + ",\r\n")
+	return
 }
 
 //输出当前时间到文件
@@ -205,6 +208,5 @@ func WriteTimeToFile() {
 
 //将返回值中的逗号替换掉
 func RespCsv(respBody string) string {
-	a := strings.Replace(respBody, ",", "%", -1)
-	return a
+	return strings.Replace(respBody, ",", "%", -1)
 }
