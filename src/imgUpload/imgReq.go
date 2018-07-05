@@ -33,7 +33,7 @@ func createFormFile(w *multipart.Writer, fieldname string, filename string) (io.
 	//构成请求体格式
 	h := make(textproto.MIMEHeader)
 	h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s"`, fieldname, filename))
-	//h.Set("Content-Type", "image/jpeg")
+	h.Set("Content-Type", "image/jpeg")
 	return w.CreatePart(h)
 }
 

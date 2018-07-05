@@ -33,7 +33,7 @@ func main() {
 				respBody = imgUpload.DoUpload(req, imgPath)
 			}
 			imgUpload.WriteTime()
-			imgUpload.WriteToFile(imgName)
+			imgUpload.WriteToFile(imgPath)
 			imgUpload.WriteToFile(respBody)
 		}
 	}
