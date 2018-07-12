@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"upload"
+	"huasheng28/upload"
 )
 
 func startCycle(csvName string) {

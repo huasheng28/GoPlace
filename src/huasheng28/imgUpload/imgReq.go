@@ -25,7 +25,7 @@ type ARequest struct {
 func check(err error) {
 	if err != nil {
 		fmt.Println(err)
-		WriteToFile("Error:"+err.Error())
+		WriteToFile("Error:" + err.Error())
 	}
 }
 
@@ -77,7 +77,7 @@ func newRequest(reqHand ARequest, imgPath string) (*http.Request, error) {
 	}
 
 	//为什么多了68字节啊？？？？？？
-	req.ContentLength=int64(body.Len()+68)
+	req.ContentLength = int64(body.Len() + 68)
 	return req, err
 }
 

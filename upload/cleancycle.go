@@ -3,7 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"fmt"
-	"upload"
+	"huasheng28/upload"
 	"os"
 	"strconv"
 	"regexp"

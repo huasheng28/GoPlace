@@ -1,7 +1,7 @@
 package main
 
 import (
-	"tusin_protect"
+	"huasheng28/tusin_protect"
 	"fmt"
 )
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"imgUpload"
+	"huasheng28/imgUpload"
 	"fmt"
 	"strconv"
 	"path/filepath"
