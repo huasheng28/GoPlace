@@ -19,4 +19,5 @@ func SendEmail(sender, pw string, receiver []string) bool {
 	if err!=nil{
 		fmt.Println(err)
 	}
+	return false
 }
